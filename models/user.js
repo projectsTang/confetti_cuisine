@@ -1,4 +1,5 @@
 const Subscriber = require("./subscriber");
+const bcrypt = require("bcrypt");
 const mongoose = require("mongoose"),
     userSchema = mongoose.Schema({
     name: {
@@ -34,22 +35,18 @@ const mongoose = require("mongoose"),
 
 userSchema.pre('save', function(next){
     let user = this;
-    if (user.subscribedAccount === undefined) {
-        Subscriber.findOne({email: user.email})
-        .then(subscriber=>{user.subscribedAccount=subscriber;next();})
-        .catch(error=>{
-            console.log(`Error in connecting sunscriber: ${error.message}`);
-            next(error);
-        });
-    }
-    else {
-        next();
-    }
+    bcrypt.hash(user.password, 10).then()
 });
 
 userSchema.virtual("fullName")
     .get(function(){
         return `${this.name.first} ${this.name.last}`;
     });
+
+
+userSchema.methods.passwordComparison = function(inputPassword) {
+    let user = this;
+    return bcrypt.compare(inputPassword, user.password);
+};
 
 module.exports = mongoose.model("User", userSchema);

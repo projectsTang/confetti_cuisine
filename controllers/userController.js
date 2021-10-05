@@ -50,12 +50,11 @@ module.exports = {
 
     redirectView: (req, res, next) => {
         let redirectPath = res.locals.redirect;
-        if (redirectPath) res.redirect(redirectPath);
+        if (redirectPath) res.redirect(redirectPath)
         else next();
     },
 
     show: (req, res, next) => {
-        console.log("999999999999");
         let userId = req.params.id;
         User.findById(userId)
             .then(user=>{
@@ -121,22 +120,30 @@ module.exports = {
     },
 
     login: (req, res, next) => {
-        console.log("111111111111");
         res.render("users/login");
     },
 
     authenticate: (req, res, next) => {
         User.findOne({email: req.body.email})
             .then(user=>{
-                if (user && user.password === req.body.password) {
-                    res.locals.redirect = `/users/${user._id}`;
-                    req.flash("success", `${user.fullName}'s logged successfully!'`);
-                    res.locals.user = user;
-                    next();
+                if (user) {
+                    user.passwordComparison(req.body.password)
+                        .then(passwordsMatch => {
+                            if (passwordsMatch) {
+                                res.locals.redirect = `/users/${user._id}`;
+                            req.flash("success", `${user.fullNama} is logged in successfully!`);
+                            res.locals.user = user;
+                            }
+                            else {
+                                res.flash("error", "Failed to log in user account: Incorrect Password.");
+                                res.locals.redirect = "/users/login";
+                                next();
+                            }
+                        })
                 }
                 else {
-                    req.flash("error", "Your account or password is incorrect.Please try again or contact your system administrator!");
-                    res.redirect = "/users/login";
+                    req.flash("error", "Failed to log in user account: User account not found.");
+                    req.locals.redirect = "/users/login";
                     next();
                 }
             })
